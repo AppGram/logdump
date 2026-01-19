@@ -21,11 +21,37 @@ Real-time log aggregation tool with TUI and MCP server for AI agents.
 
 ## Installation
 
-### Homebrew (macOS)
+### Homebrew (macOS/Linux)
 
 ```bash
 brew tap appgram/tap
 brew install logdump
+```
+
+### Direct Download (macOS, Linux, Windows)
+
+Download pre-built binaries from the [releases page](https://github.com/appgram/logdump/releases):
+
+```bash
+# macOS Apple Silicon
+curl -L https://github.com/appgram/logdump/releases/download/v1.0.1/logdump_v1.0.1_darwin_arm64.tar.gz | tar xz
+chmod +x logdump
+mv logdump /usr/local/bin/
+
+# macOS Intel
+curl -L https://github.com/appgram/logdump/releases/download/v1.0.1/logdump_v1.0.1_darwin_amd64.tar.gz | tar xz
+chmod +x logdump
+mv logdump /usr/local/bin/
+
+# Linux x86_64
+curl -L https://github.com/appgram/logdump/releases/download/v1.0.1/logdump_v1.0.1_linux_amd64.tar.gz | tar xz
+chmod +x logdump
+sudo mv logdump /usr/local/bin/
+
+# Linux ARM64
+curl -L https://github.com/appgram/logdump/releases/download/v1.0.1/logdump_v1.0.1_linux_arm64.tar.gz | tar xz
+chmod +x logdump
+sudo mv logdump /usr/local/bin/
 ```
 
 ### From Source
