@@ -23,8 +23,8 @@ var (
 	helpBar     = lipgloss.NewStyle().Background(lipgloss.Color("#2d2d44")).Foreground(lipgloss.Color("#888888")).Padding(0, 1)
 	titleStyle  = lipgloss.NewStyle().Background(lipgloss.Color("#00d9ff")).Foreground(lipgloss.Color("#1a1a2e")).Bold(true).Padding(0, 1)
 
-	errorColor = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff5555"))
-	cyanColor  = lipgloss.NewStyle().Foreground(lipgloss.Color("#00d9ff"))
+	errorColor   = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff5555"))
+	cyanColor    = lipgloss.NewStyle().Foreground(lipgloss.Color("#00d9ff"))
 	greenColor   = lipgloss.NewStyle().Foreground(lipgloss.Color("#55ff55"))
 	yellowColor  = lipgloss.NewStyle().Foreground(lipgloss.Color("#ffaa00"))
 	magentaColor = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff55ff"))
@@ -64,12 +64,14 @@ type Model struct {
 	height          int
 	scrollOffset    int
 	paused          bool
-	autoScroll      bool // auto-scroll to bottom when new logs arrive
-	selectedIdx     int  // currently selected log entry index
-	detailMode      bool // showing detail view of selected entry
-	reverseOrder    bool // show newest logs at top instead of bottom
-	showStreamList  bool // show full streams list overlay
-	confirmDelete   bool // showing delete confirmation
+	autoScroll      bool
+	selectedIdx     int
+	detailMode      bool
+	reverseOrder    bool
+	showStreamList  bool
+	confirmDelete   bool
+	splashScreen    bool
+	asciiArt        string
 }
 
 func New(manager *logtail.Manager, cfg *config.Config) *Model {
@@ -83,6 +85,8 @@ func New(manager *logtail.Manager, cfg *config.Config) *Model {
 		selectedStreams[s.Name] = true
 	}
 
+	asciiArt := loadASCIIArt()
+
 	return &Model{
 		manager:         manager,
 		config:          cfg,
@@ -91,13 +95,30 @@ func New(manager *logtail.Manager, cfg *config.Config) *Model {
 		filteredBuffer:  make([]LogEntry, 0, 1000),
 		streams:         streams,
 		selectedStreams: selectedStreams,
-		autoScroll:      true, // auto-scroll enabled by default
+		autoScroll:      true,
+		splashScreen:    true,
+		asciiArt:        asciiArt,
 	}
 }
 
+func loadASCIIArt() string {
+	data, err := os.ReadFile("logdump-ascii.txt")
+	if err != nil {
+		return ""
+	}
+	return string(data)
+}
+
 func (m *Model) Init() tea.Cmd {
+	if m.splashScreen {
+		return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+			return splashTimeoutMsg(t)
+		})
+	}
 	return m.tick()
 }
+
+type splashTimeoutMsg time.Time
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -107,6 +128,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.Width = msg.Width - 4
 		m.viewport.Height = msg.Height - 8
 		m.viewport.SetContent(m.renderTable())
+
+	case splashTimeoutMsg:
+		m.splashScreen = false
+		m.viewport.SetContent(m.renderTable())
+		return m, m.tick()
 
 	case tea.KeyMsg:
 		// Handle search mode input FIRST - capture all typeable characters
@@ -277,6 +303,10 @@ func (m *Model) View() string {
 		return "Initializing..."
 	}
 
+	if m.splashScreen {
+		return m.renderSplashScreen()
+	}
+
 	if m.confirmDelete {
 		return m.renderDeleteConfirm()
 	}
@@ -298,6 +328,48 @@ func (m *Model) View() string {
 		borderStyle.Render(table),
 		footer,
 	)
+}
+
+func (m *Model) renderSplashScreen() string {
+	lines := strings.Split(m.asciiArt, "\n")
+
+	var maxWidth int
+	for _, line := range lines {
+		if len(line) > maxWidth {
+			maxWidth = len(line)
+		}
+	}
+
+	paddingTop := (m.height - len(lines)) / 2
+	sidePadding := (m.width - maxWidth) / 2
+
+	var content strings.Builder
+	for i := 0; i < paddingTop; i++ {
+		content.WriteString("\n")
+	}
+
+	for _, line := range lines {
+		spaces := sidePadding
+		if spaces < 0 {
+			spaces = 0
+		}
+		content.WriteString(strings.Repeat(" ", spaces))
+		content.WriteString(cyanColor.Render(line))
+		content.WriteString("\n")
+	}
+
+	helpMsg := grayColor.Render("Press any key to continue...")
+	helpPadding := (m.width - lipgloss.Width(helpMsg)) / 2
+	if helpPadding < 0 {
+		helpPadding = 0
+	}
+
+	content.WriteString(strings.Repeat("\n", paddingTop-2))
+	content.WriteString(strings.Repeat(" ", helpPadding))
+	content.WriteString(helpMsg)
+	content.WriteString("\n")
+
+	return lipgloss.NewStyle().Height(m.height).Width(m.width).Render(content.String())
 }
 
 func (m *Model) renderStreamList() string {
