@@ -1,0 +1,36 @@
+# Binaries
+logdump
+logdump-*
+*.exe
+
+# Build directories
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Local config (don't commit personal configs)
+logdump.yaml
+.logdump.yaml
+
+# Logs
+*.log
+
+# Local files
+.claude/
+test-*.yaml
+test-*.sh
+1f

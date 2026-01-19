@@ -1,0 +1,77 @@
+# GoReleaser configuration for logdump
+version: 2
+
+project_name: logdump
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: logdump
+    main: .
+    binary: logdump
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+
+archives:
+  - id: default
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "Merge pull request"
+      - "Merge branch"
+
+brews:
+  - name: logdump
+    repository:
+      owner: appgram
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/appgram/logdump"
+    description: "Real-time log aggregation tool with TUI and MCP server for AI agents"
+    license: "MIT"
+    skip_upload: auto
+    install: |
+      bin.install "logdump"
+    test: |
+      system "#{bin}/logdump", "-version"
+
+release:
+  github:
+    owner: appgram
+    name: logdump
+  draft: false
+  prerelease: auto
+  name_template: "v{{.Version}}"
