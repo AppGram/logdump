@@ -2,6 +2,10 @@
 
 Real-time log aggregation tool with TUI and MCP server for AI agents.
 
+<p align="center">
+  <img src="screen-recording.gif" alt="Logdump Demo" width="800">
+</p>
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/appgram/logdump)](https://goreportcard.com/report/github.com/appgram/logdump)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
